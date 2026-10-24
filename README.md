@@ -16,6 +16,8 @@ if it's not found by its name, uploads attachments, translates Markdown into HTM
 contents of the page via REST API. It's like you don't even need to create sections/pages in your
 Confluence anymore, just use them in your Markdown documentation.
 
+**Jump to:** [Installation](#installation) · [Usage](#usage) · [Template & Macros](#template--macros) · [Continuous Integration](#continuous-integration) · [Tricks](#tricks)
+
 Mark uses an extended file format, which, still being valid markdown,
 contains several HTML-ish metadata headers, which can be used to locate page inside
 Confluence instance and update it accordingly.
@@ -54,22 +56,6 @@ order: <whole number>
 
 The legacy HTML header format is also supported:
 
-When both formats are present, HTML headers override matching scalar front
-matter values. Repeatable parents, folders, attachments, and labels are
-appended to the values from front matter.
-
-Note that the front matter keys are plural where the HTML headers are singular:
-`attachments`, `parents`, `folders`, `labels` and `properties`. A key mark does
-not read is ignored, and warned about:
-
-```console
-WARNING doc.md: front matter key "attachment" is not read by mark and was ignored
-```
-
-Front matter shared with another tool -- a static site generator's `date` and
-`draft` in the same block -- is reported the same way, since mark cannot tell a
-key meant for something else from one meant for mark and misspelled.
-
 ```markdown
 <!-- Space: <space key> -->
 <!-- Parent: <parent 1> -->
@@ -86,6 +72,22 @@ key meant for something else from one meant for mark and misspelled.
 
 <page contents>
 ```
+
+When both formats are present, HTML headers override matching scalar front
+matter values. Repeatable parents, folders, attachments, and labels are
+appended to the values from front matter.
+
+Note that the front matter keys are plural where the HTML headers are singular:
+`attachments`, `parents`, `folders`, `labels` and `properties`. A key mark does
+not read is ignored, and warned about:
+
+```console
+WARNING doc.md: front matter key "attachment" is not read by mark and was ignored
+```
+
+Front matter shared with another tool -- a static site generator's `date` and
+`draft` in the same block -- is reported the same way, since mark cannot tell a
+key meant for something else from one meant for mark and misspelled.
 
 Headers are read from the run of comments the document opens with, and only
 from there. Blank lines between them are fine, so headers may be grouped —
@@ -2192,6 +2194,16 @@ because a page named without a space key is looked for in the current one; a
 link across spaces keeps its URL. And a fragment naming no heading in that
 document is left exactly as written, since guessing which section was meant
 would send the reader somewhere the author did not choose.
+
+### Characters Confluence cannot store
+
+XML 1.0 has no spelling for most control characters, so a page containing one
+is refused whole. The usual source is pasted terminal output carrying an ANSI
+colour code (`ESC`, U+001B), or a stray form feed. Mark replaces each such
+character, and any byte that is not valid UTF-8, with U+FFFD (`�`), and does the
+same for numeric references to them such as `&#27;`. It logs one warning naming
+the document, so a `�` on a published page can be traced back to its source.
+Ordinary text, tabs and newlines are untouched.
 
 ### Linting markdown
 
